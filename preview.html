@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autonomic Coach UI Preview</title>
+  <style>
+    body { margin:0; font-family: Inter, Arial, sans-serif; background:#0f172a; color:#e2e8f0; }
+    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+    .card { background: rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius: 14px; padding:14px; margin-bottom:12px; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .grid { display:grid; grid-template-columns: 1.1fr .9fr; gap:12px; }
+    @media (max-width: 850px){ .grid{ grid-template-columns:1fr; } }
+    button { background:#6366f1; color:white; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:600; }
+    button.secondary { background:#334155; }
+    .pill{font-size:12px;padding:5px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2)}
+    .muted{color:#94a3b8;font-size:13px}
+    .step{display:none}
+    .step.active{display:block}
+    .score{font-size:44px;font-weight:800}
+    .task{padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;margin-top:8px}
+    .chat{max-height:220px;overflow:auto;background:rgba(0,0,0,.2);padding:8px;border-radius:10px}
+    .msg{margin:6px 0}
+    .progress{height:8px;background:#1e293b;border-radius:999px;overflow:hidden}
+    .bar{height:100%;background:linear-gradient(90deg,#60a5fa,#34d399);width:33%}
+    input[type=range]{width:220px}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Autonomic Coach</h1>
+
+    <section id="onboarding" class="card">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">Onboarding</h3>
+        <span id="stepText" class="pill">1 / 3</span>
+      </div>
+      <div class="progress"><div id="onboardBar" class="bar"></div></div>
+      <div style="height:10px"></div>
+
+      <div id="step1" class="step active">
+        <p>欢迎使用，我们会先做问卷来初始化你的自主神经画像。</p>
+      </div>
+      <div id="step2" class="step">
+        <p class="muted">问卷（1-5 分）</p>
+        <div class="row"><span>睡眠质量</span><input id="qSleep" type="range" min="1" max="5" value="3"><span id="vSleep">3</span></div>
+        <div class="row"><span>压力水平</span><input id="qStress" type="range" min="1" max="5" value="3"><span id="vStress">3</span></div>
+        <div class="row"><span>咖啡因频率</span><input id="qCafe" type="range" min="1" max="5" value="2"><span id="vCafe">2</span></div>
+        <div class="row"><span>运动频率</span><input id="qSport" type="range" min="1" max="5" value="3"><span id="vSport">3</span></div>
+        <div class="row"><span>昼夜规律</span><input id="qCirc" type="range" min="1" max="5" value="3"><span id="vCirc">3</span></div>
+        <button id="btnCalcType">生成类型</button>
+      </div>
+      <div id="step3" class="step">
+        <p id="onboardResult">请先生成类型。</p>
+      </div>
+
+      <div class="row" style="justify-content:space-between;margin-top:10px;">
+        <button id="btnPrev" class="secondary">上一步</button>
+        <div>
+          <button id="btnNext">下一步</button>
+          <button id="btnFinish" style="display:none">进入主页</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" style="display:none" class="grid">
+      <div>
+        <div class="card"><h3>画像结果</h3><div id="profile" class="pill">未生成</div></div>
+        <div class="card">
+          <h3>每小时健康分</h3>
+          <div id="score" class="score">--</div>
+          <p id="summary" class="muted">等待评估...</p>
+          <button id="btnRefresh">立即刷新评估</button>
+        </div>
+        <div class="card"><h3>可执行任务</h3><div id="tasks" class="muted">请先刷新健康分。</div></div>
+      </div>
+      <div>
+        <div class="card"><h3>专家 AI</h3><button id="btnAsk">问 AI：我现在该做什么？</button><div id="chat" class="chat"></div></div>
+        <div class="card"><h3>快速 Log</h3><button id="btnLog" class="secondary">记录：压力4/5 + 咖啡因</button><p id="log" class="muted">暂无记录</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state={step:1, profile:null, history:[]};
+    const $=id=>document.getElementById(id);
+    function syncStep(){
+      [1,2,3].forEach(i=>$("step"+i).classList.toggle('active', i===state.step));
+      $("stepText").textContent=`${state.step} / 3`;
+      $("onboardBar").style.width=(state.step/3*100)+"%";
+      $("btnPrev").style.visibility=state.step===1?'hidden':'visible';
+      $("btnNext").style.display=state.step===3?'none':'inline-block';
+      $("btnFinish").style.display=state.step===3?'inline-block':'none';
+    }
+    function bindRange(id,v){ const e=$(id); const o=$(v); e.oninput=()=>o.textContent=e.value; }
+    bindRange('qSleep','vSleep'); bindRange('qStress','vStress'); bindRange('qCafe','vCafe'); bindRange('qSport','vSport'); bindRange('qCirc','vCirc');
+
+    $('btnPrev').onclick=()=>{ if(state.step>1){state.step--;syncStep();} };
+    $('btnNext').onclick=()=>{ if(state.step<3){state.step++;syncStep();} };
+
+    $('btnCalcType').onclick=()=>{
+      const sleep=+$('qSleep').value, stress=+$('qStress').value, cafe=+$('qCafe').value, sport=+$('qSport').value, circ=+$('qCirc').value;
+      const stressScore=stress+cafe, recovery=(6-sleep)+(6-sport), circScore=6-circ;
+      let type='昼夜节律紊乱型';
+      if(stressScore>=Math.max(recovery,circScore)) type='压力高反应型';
+      else if(recovery>=circScore) type='恢复缓慢型';
+      const baseline=Math.max(45, 80-stressScore*3-recovery*2-circScore*2);
+      state.profile={type, baseline};
+      $('onboardResult').textContent=`类型：${type}｜基线分：${baseline}`;
+      $('profile').textContent=`类型：${type}｜基线分：${baseline}`;
+      state.step=3; syncStep();
+    };
+
+    $('btnFinish').onclick=()=>{
+      if(!state.profile){ $('onboardResult').textContent='请先在上一步生成类型'; return; }
+      $('onboarding').style.display='none';
+      $('dashboard').style.display='grid';
+    };
+
+    function scoreOne(){
+      const h=Math.max(0,-(Math.random()*2-1))*20;
+      const s=Math.random()*18;
+      const t=Math.random()*22;
+      const b=Math.random()*16;
+      const bonus=Math.random()*6;
+      const score=Math.max(0,Math.min(100,Math.round(100-h-s-t-b+bonus)));
+      let summary='状态稳定，建议保持节奏。';
+      if(score<60) summary='交感神经可能持续兴奋，优先做降负荷任务。'; else if(score<80) summary='轻度压力激活，建议2-6分钟呼吸或步行。';
+      return {score,summary};
+    }
+    $('btnRefresh').onclick=()=>{
+      const r=scoreOne(); state.history.push(r.score);
+      $('score').textContent=r.score; $('summary').textContent=r.summary;
+      if(r.score<60) $('tasks').innerHTML='<div class="task">3分钟延长呼气呼吸</div><div class="task">离开屏幕快走6分钟</div>';
+      else $('tasks').innerHTML='<div class="task">2分钟躯体扫描</div>';
+      const recent=state.history.slice(-3); if(recent.length===3 && recent.every(x=>x<60)) addMsg('AI','你已经连续3小时处于高压力状态，先做5分钟重置。');
+    };
+    function addMsg(role,text){ const p=document.createElement('div'); p.className='msg'; p.textContent=`${role}：${text}`; $('chat').appendChild(p); $('chat').scrollTop=$('chat').scrollHeight; }
+    $('btnAsk').onclick=()=>{ addMsg('我','我现在该做什么？'); addMsg('AI','先做一个3分钟呼吸重置，然后告诉我体感变化。'); };
+    $('btnLog').onclick=()=>{ $('log').textContent=`最新：压力4/5，备注：下午连会（${new Date().toLocaleString()}）`; };
+
+    addMsg('AI','欢迎！请先完成 onboarding 问卷。');
+    syncStep();
+  </script>
+</body>
+</html>
