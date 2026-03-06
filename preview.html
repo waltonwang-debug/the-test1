@@ -5,142 +5,258 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Autonomic Coach UI Preview</title>
   <style>
-    body { margin:0; font-family: Inter, Arial, sans-serif; background:#0f172a; color:#e2e8f0; }
-    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
-    .card { background: rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius: 14px; padding:14px; margin-bottom:12px; }
-    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .grid { display:grid; grid-template-columns: 1.1fr .9fr; gap:12px; }
-    @media (max-width: 850px){ .grid{ grid-template-columns:1fr; } }
-    button { background:#6366f1; color:white; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:600; }
-    button.secondary { background:#334155; }
-    .pill{font-size:12px;padding:5px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2)}
-    .muted{color:#94a3b8;font-size:13px}
-    .step{display:none}
-    .step.active{display:block}
-    .score{font-size:44px;font-weight:800}
-    .task{padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;margin-top:8px}
-    .chat{max-height:220px;overflow:auto;background:rgba(0,0,0,.2);padding:8px;border-radius:10px}
-    .msg{margin:6px 0}
-    .progress{height:8px;background:#1e293b;border-radius:999px;overflow:hidden}
-    .bar{height:100%;background:linear-gradient(90deg,#60a5fa,#34d399);width:33%}
-    input[type=range]{width:220px}
+    :root {
+      --bg: #0b1020;
+      --bg2: #111831;
+      --card: rgba(255, 255, 255, 0.08);
+      --text: #e9edff;
+      --muted: #b8c0e3;
+      --danger: #ff7b9c;
+      --warning: #ffc46b;
+      --success: #4ade80;
+      --stroke: rgba(255,255,255,0.16);
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 500px at 10% -20%, #2c3fbf 0%, transparent 55%),
+        radial-gradient(800px 500px at 110% 10%, #0ea5a0 0%, transparent 45%),
+        linear-gradient(160deg, var(--bg), var(--bg2));
+    }
+    .container { max-width: 980px; margin: 28px auto 48px; padding: 0 16px; }
+    .hero,.card { background: var(--card); border: 1px solid var(--stroke); box-shadow: var(--shadow); backdrop-filter: blur(8px); border-radius: 18px; }
+    .hero { padding: 20px; margin-bottom: 12px; }
+    .title { font-size: 30px; font-weight: 800; margin: 0; }
+    .subtitle { color: var(--muted); margin: 6px 0 12px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { font-size: 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 10px; }
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }
+    @media (max-width: 880px){ .grid{ grid-template-columns: 1fr; } }
+    .card { padding: 14px; }
+    h3 { margin: 0 0 8px; font-size: 17px; }
+    p { margin: 0; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .sp8{height:8px}.sp10{height:10px}.sp12{height:12px}
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button { border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 9px 12px; font-weight: 700; cursor: pointer; color: #fff; background: linear-gradient(135deg,#6d7dff,#5565f0); }
+    button.secondary { background: rgba(255,255,255,.12); }
+    .pill { font-size: 12px; border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:6px 10px; }
+
+    .progress { height: 8px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; }
+    .bar { height: 100%; width: 50%; background: linear-gradient(90deg,#60a5fa,#34d399); }
+
+    .score-wrap { border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:10px; background: rgba(255,255,255,.06); }
+    .score-line { display:flex; justify-content:space-between; align-items:flex-end; }
+    .score { font-size: 46px; font-weight: 900; line-height: 1; }
+    .badge { font-size: 12px; font-weight: 700; padding: 5px 8px; border-radius:999px; }
+    .good{background:rgba(74,222,128,.2); color:#baffd3;} .warn{background:rgba(255,196,107,.2); color:#ffe7ba;} .bad{background:rgba(255,123,156,.2); color:#ffd5e1;}
+
+    .reason { margin-top:8px; }
+    .reason .label { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+    .reason .track { height: 6px; background: rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
+    .reason .fill { height:100%; background: linear-gradient(90deg,#fbbf24,#f87171); }
+
+    .task { border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px; background: rgba(255,255,255,.05); margin-top:8px; }
+    .task .name{font-weight:700}.task .desc{font-size:13px;color:var(--muted);margin-top:4px}
+
+    .chat { max-height: 210px; overflow:auto; border-radius:12px; padding:8px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.12); }
+    .msg{display:flex;margin:8px 0}.msg.ai{justify-content:flex-start}.msg.me{justify-content:flex-end}
+    .bubble{max-width:86%;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.15);font-size:13px;line-height:1.35}
+    .msg.ai .bubble{background:rgba(94,234,212,.16)} .msg.me .bubble{background:rgba(124,140,255,.26)}
+
+    .switch { display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted); }
+    .footer-note { font-size:12px; color:#d3daf9; opacity:.92; }
   </style>
 </head>
 <body>
   <main class="container">
-    <h1>Autonomic Coach</h1>
-
-    <section id="onboarding" class="card">
-      <div class="row" style="justify-content:space-between">
-        <h3 style="margin:0">Onboarding</h3>
-        <span id="stepText" class="pill">1 / 3</span>
+    <section class="hero">
+      <h1 class="title">Autonomic Coach</h1>
+      <p class="subtitle">产品经理复核优化版：信息层级、可解释性、任务闭环、风险提示都已加强</p>
+      <div class="chips">
+        <span class="chip">问卷画像</span><span class="chip">每小时评分</span><span class="chip">分数解释</span><span class="chip">任务执行闭环</span><span class="chip">AI 主动关怀</span>
       </div>
-      <div class="progress"><div id="onboardBar" class="bar"></div></div>
-      <div style="height:10px"></div>
-
-      <div id="step1" class="step active">
-        <p>欢迎使用，我们会先做问卷来初始化你的自主神经画像。</p>
-      </div>
-      <div id="step2" class="step">
-        <p class="muted">问卷（1-5 分）</p>
-        <div class="row"><span>睡眠质量</span><input id="qSleep" type="range" min="1" max="5" value="3"><span id="vSleep">3</span></div>
-        <div class="row"><span>压力水平</span><input id="qStress" type="range" min="1" max="5" value="3"><span id="vStress">3</span></div>
-        <div class="row"><span>咖啡因频率</span><input id="qCafe" type="range" min="1" max="5" value="2"><span id="vCafe">2</span></div>
-        <div class="row"><span>运动频率</span><input id="qSport" type="range" min="1" max="5" value="3"><span id="vSport">3</span></div>
-        <div class="row"><span>昼夜规律</span><input id="qCirc" type="range" min="1" max="5" value="3"><span id="vCirc">3</span></div>
-        <button id="btnCalcType">生成类型</button>
-      </div>
-      <div id="step3" class="step">
-        <p id="onboardResult">请先生成类型。</p>
-      </div>
-
-      <div class="row" style="justify-content:space-between;margin-top:10px;">
-        <button id="btnPrev" class="secondary">上一步</button>
-        <div>
-          <button id="btnNext">下一步</button>
-          <button id="btnFinish" style="display:none">进入主页</button>
-        </div>
-      </div>
+      <div class="sp10"></div>
+      <div class="muted">新手引导进度</div>
+      <div class="progress"><div class="bar" id="onboardingBar"></div></div>
     </section>
 
-    <section id="dashboard" style="display:none" class="grid">
+    <section class="grid">
       <div>
-        <div class="card"><h3>画像结果</h3><div id="profile" class="pill">未生成</div></div>
-        <div class="card">
+        <section class="card">
+          <h3>问卷评估</h3>
+          <p class="muted">初始化自主神经类型与基线，决定建议策略。</p>
+          <div class="sp8"></div>
+          <div class="row">
+            <button id="btnProfile">生成类型</button>
+            <span id="profile" class="pill">尚未生成</span>
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:12px;">
           <h3>每小时健康分</h3>
-          <div id="score" class="score">--</div>
-          <p id="summary" class="muted">等待评估...</p>
+          <div class="score-wrap">
+            <div class="score-line">
+              <div id="score" class="score">--</div>
+              <span id="scoreBadge" class="badge warn">待评估</span>
+            </div>
+            <p id="summary" class="muted">等待数据中...</p>
+
+            <div class="reason"><div class="label"><span>HRV 偏移</span><span id="r1">--</span></div><div class="track"><div id="f1" class="fill" style="width:0%"></div></div></div>
+            <div class="reason"><div class="label"><span>睡眠负债</span><span id="r2">--</span></div><div class="track"><div id="f2" class="fill" style="width:0%"></div></div></div>
+            <div class="reason"><div class="label"><span>压力负荷</span><span id="r3">--</span></div><div class="track"><div id="f3" class="fill" style="width:0%"></div></div></div>
+            <div class="reason"><div class="label"><span>行为负荷</span><span id="r4">--</span></div><div class="track"><div id="f4" class="fill" style="width:0%"></div></div></div>
+          </div>
+          <div class="sp8"></div>
           <button id="btnRefresh">立即刷新评估</button>
-        </div>
-        <div class="card"><h3>可执行任务</h3><div id="tasks" class="muted">请先刷新健康分。</div></div>
+        </section>
+
+        <section class="card" style="margin-top:12px;">
+          <h3>可执行小任务（闭环）</h3>
+          <div id="tasks" class="muted">刷新健康分后生成任务建议。</div>
+          <div class="sp8"></div>
+          <div class="row">
+            <button id="btnDone" class="secondary">我已完成一个任务</button>
+            <span id="taskFeedback" class="pill">待完成</span>
+          </div>
+        </section>
       </div>
+
       <div>
-        <div class="card"><h3>专家 AI</h3><button id="btnAsk">问 AI：我现在该做什么？</button><div id="chat" class="chat"></div></div>
-        <div class="card"><h3>快速 Log</h3><button id="btnLog" class="secondary">记录：压力4/5 + 咖啡因</button><p id="log" class="muted">暂无记录</p></div>
+        <section class="card">
+          <h3>专家 AI</h3>
+          <div class="row" style="margin-bottom:8px;"><button id="btnAsk">问 AI：我现在该做什么？</button></div>
+          <label class="switch"><input type="checkbox" id="proactiveToggle" checked /> 开启 AI 主动关怀</label>
+          <div class="sp8"></div>
+          <div id="chat" class="chat"></div>
+        </section>
+
+        <section class="card" style="margin-top:12px;">
+          <h3>快速 Log</h3>
+          <button id="btnLog" class="secondary">记录：压力4/5 + 咖啡因</button>
+          <div class="sp8"></div>
+          <div id="log" class="pill">暂无记录</div>
+        </section>
+
+        <section class="card" style="margin-top:12px;">
+          <h3>安全与边界</h3>
+          <p class="footer-note">本应用用于健康管理，不提供医疗诊断。若出现持续胸闷、惊恐或严重失眠，请尽快联系专业医生。</p>
+        </section>
       </div>
     </section>
   </main>
 
   <script>
-    const state={step:1, profile:null, history:[]};
-    const $=id=>document.getElementById(id);
-    function syncStep(){
-      [1,2,3].forEach(i=>$("step"+i).classList.toggle('active', i===state.step));
-      $("stepText").textContent=`${state.step} / 3`;
-      $("onboardBar").style.width=(state.step/3*100)+"%";
-      $("btnPrev").style.visibility=state.step===1?'hidden':'visible';
-      $("btnNext").style.display=state.step===3?'none':'inline-block';
-      $("btnFinish").style.display=state.step===3?'inline-block':'none';
+    const historyScores = [];
+    let completedTasks = 0;
+
+    const el = id => document.getElementById(id);
+    function random(min, max) { return Math.random() * (max - min) + min; }
+
+    function evaluate(snapshot) {
+      const hrvPenalty = Math.max(0, -snapshot.hrvDeviation) * 20;
+      const sleepPenalty = snapshot.sleepDebt * 18;
+      const stressPenalty = snapshot.stressLoad * 22;
+      const behaviorPenalty = snapshot.behaviorLoad * 16;
+      const bonus = snapshot.taskRecoveryBonus * 14;
+      const score = Math.round(Math.max(0, Math.min(100, 100 - hrvPenalty - sleepPenalty - stressPenalty - behaviorPenalty + bonus)));
+      let summary = '状态稳定，建议保持节奏并继续轻量恢复习惯。';
+      if (score < 60) summary = '交感神经可能持续兴奋，优先做降负荷任务并减少刺激。';
+      else if (score < 80) summary = '轻度压力激活，建议执行 2-6 分钟呼吸或步行任务。';
+      return { score, summary, hrvPenalty, sleepPenalty, stressPenalty, behaviorPenalty };
     }
-    function bindRange(id,v){ const e=$(id); const o=$(v); e.oninput=()=>o.textContent=e.value; }
-    bindRange('qSleep','vSleep'); bindRange('qStress','vStress'); bindRange('qCafe','vCafe'); bindRange('qSport','vSport'); bindRange('qCirc','vCirc');
 
-    $('btnPrev').onclick=()=>{ if(state.step>1){state.step--;syncStep();} };
-    $('btnNext').onclick=()=>{ if(state.step<3){state.step++;syncStep();} };
-
-    $('btnCalcType').onclick=()=>{
-      const sleep=+$('qSleep').value, stress=+$('qStress').value, cafe=+$('qCafe').value, sport=+$('qSport').value, circ=+$('qCirc').value;
-      const stressScore=stress+cafe, recovery=(6-sleep)+(6-sport), circScore=6-circ;
-      let type='昼夜节律紊乱型';
-      if(stressScore>=Math.max(recovery,circScore)) type='压力高反应型';
-      else if(recovery>=circScore) type='恢复缓慢型';
-      const baseline=Math.max(45, 80-stressScore*3-recovery*2-circScore*2);
-      state.profile={type, baseline};
-      $('onboardResult').textContent=`类型：${type}｜基线分：${baseline}`;
-      $('profile').textContent=`类型：${type}｜基线分：${baseline}`;
-      state.step=3; syncStep();
-    };
-
-    $('btnFinish').onclick=()=>{
-      if(!state.profile){ $('onboardResult').textContent='请先在上一步生成类型'; return; }
-      $('onboarding').style.display='none';
-      $('dashboard').style.display='grid';
-    };
-
-    function scoreOne(){
-      const h=Math.max(0,-(Math.random()*2-1))*20;
-      const s=Math.random()*18;
-      const t=Math.random()*22;
-      const b=Math.random()*16;
-      const bonus=Math.random()*6;
-      const score=Math.max(0,Math.min(100,Math.round(100-h-s-t-b+bonus)));
-      let summary='状态稳定，建议保持节奏。';
-      if(score<60) summary='交感神经可能持续兴奋，优先做降负荷任务。'; else if(score<80) summary='轻度压力激活，建议2-6分钟呼吸或步行。';
-      return {score,summary};
+    function setBadge(score) {
+      const b = el('scoreBadge');
+      if (score >= 80) { b.className='badge good'; b.textContent='恢复良好'; el('score').style.color='var(--success)'; }
+      else if (score >= 60) { b.className='badge warn'; b.textContent='轻度激活'; el('score').style.color='var(--warning)'; }
+      else { b.className='badge bad'; b.textContent='高压状态'; el('score').style.color='var(--danger)'; }
     }
-    $('btnRefresh').onclick=()=>{
-      const r=scoreOne(); state.history.push(r.score);
-      $('score').textContent=r.score; $('summary').textContent=r.summary;
-      if(r.score<60) $('tasks').innerHTML='<div class="task">3分钟延长呼气呼吸</div><div class="task">离开屏幕快走6分钟</div>';
-      else $('tasks').innerHTML='<div class="task">2分钟躯体扫描</div>';
-      const recent=state.history.slice(-3); if(recent.length===3 && recent.every(x=>x<60)) addMsg('AI','你已经连续3小时处于高压力状态，先做5分钟重置。');
-    };
-    function addMsg(role,text){ const p=document.createElement('div'); p.className='msg'; p.textContent=`${role}：${text}`; $('chat').appendChild(p); $('chat').scrollTop=$('chat').scrollHeight; }
-    $('btnAsk').onclick=()=>{ addMsg('我','我现在该做什么？'); addMsg('AI','先做一个3分钟呼吸重置，然后告诉我体感变化。'); };
-    $('btnLog').onclick=()=>{ $('log').textContent=`最新：压力4/5，备注：下午连会（${new Date().toLocaleString()}）`; };
 
-    addMsg('AI','欢迎！请先完成 onboarding 问卷。');
-    syncStep();
+    function setReason(key, value, max) {
+      el('r'+key).textContent = value.toFixed(1);
+      el('f'+key).style.width = Math.min(100, (value/max)*100).toFixed(0) + '%';
+    }
+
+    function tasksFor(score) {
+      return score < 60
+        ? [['3分钟延长呼气呼吸','降低交感兴奋，帮助心率和呼吸节奏回稳'], ['离开屏幕快走6分钟','缓解精神疲劳，改善短时 HRV 趋势']]
+        : [['2分钟躯体扫描','提高觉察，预防压力累积']];
+    }
+
+    function renderTasks(score) {
+      const list = tasksFor(score);
+      el('tasks').innerHTML = list.map(t => `<div class="task"><div class="name">${t[0]}</div><div class="desc">${t[1]}</div></div>`).join('');
+    }
+
+    function msg(ai, text) {
+      const row = document.createElement('div');
+      row.className = `msg ${ai ? 'ai':'me'}`;
+      row.innerHTML = `<div class="bubble">${text}</div>`;
+      el('chat').appendChild(row);
+      el('chat').scrollTop = el('chat').scrollHeight;
+    }
+
+    function onboardingProgress() {
+      let p = 20;
+      if (el('profile').textContent !== '尚未生成') p += 20;
+      if (el('score').textContent !== '--') p += 20;
+      if (completedTasks > 0) p += 20;
+      if (el('log').textContent !== '暂无记录') p += 20;
+      el('onboardingBar').style.width = p + '%';
+    }
+
+    el('btnProfile').onclick = () => {
+      const types = ['压力高反应型','恢复缓慢型','昼夜节律紊乱型'];
+      const baseline = Math.floor(random(52,79));
+      el('profile').textContent = `类型：${types[Math.floor(Math.random()*types.length)]}｜基线分：${baseline}`;
+      onboardingProgress();
+    };
+
+    el('btnRefresh').onclick = () => {
+      const snap = { hrvDeviation: random(-1.5,1.2), sleepDebt: random(0,1), stressLoad: random(0,1), behaviorLoad: random(0,1), taskRecoveryBonus: random(0,0.4) };
+      const r = evaluate(snap);
+      historyScores.push(r.score);
+      el('score').textContent = r.score;
+      el('summary').textContent = r.summary;
+      setBadge(r.score);
+      setReason(1, r.hrvPenalty, 30);
+      setReason(2, r.sleepPenalty, 20);
+      setReason(3, r.stressPenalty, 25);
+      setReason(4, r.behaviorPenalty, 20);
+      renderTasks(r.score);
+      onboardingProgress();
+
+      const recent = historyScores.slice(-3);
+      if (el('proactiveToggle').checked && recent.length === 3 && recent.every(s => s < 60)) {
+        msg(true, '你已经连续 3 个小时处于高压力状态。先暂停 5 分钟，我可以带你做一次快速重置。');
+      }
+    };
+
+    el('btnDone').onclick = () => {
+      completedTasks += 1;
+      el('taskFeedback').textContent = `已完成 ${completedTasks} 次`;
+      msg(true, '太棒了！任务执行已记录。建议 20 分钟后再看一次分数变化。');
+      onboardingProgress();
+    };
+
+    el('btnAsk').onclick = () => {
+      msg(false, '我现在该做什么？');
+      const s = el('score').textContent !== '--' ? `当前健康分 ${el('score').textContent}。` : '';
+      msg(true, `我看到了你的状态。${s}先从 3 分钟呼吸重置开始，再告诉我体感变化。`);
+    };
+
+    el('btnLog').onclick = () => {
+      el('log').textContent = `最新：压力4/5，备注：下午连会（${new Date().toLocaleString()}）`;
+      onboardingProgress();
+    };
+
+    msg(true, '欢迎回来，我会每小时给你一条可执行建议。先点“立即刷新评估”。');
+    onboardingProgress();
   </script>
 </body>
 </html>

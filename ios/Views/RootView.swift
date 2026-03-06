@@ -3,167 +3,32 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject var container: AppContainer
     @StateObject private var viewModel = DashboardViewModel()
-
-    @State private var isOnboardingCompleted = false
-    @State private var onboardingStep = 0
-
-    @State private var sleepQuality = 3
-    @State private var stressLevel = 3
-    @State private var caffeineFrequency = 2
-    @State private var exerciseFrequency = 3
-    @State private var circadianRegularity = 3
+    @State private var questionAnswer = QuestionnaireAnswer(
+        sleepQuality: 3,
+        stressLevel: 3,
+        caffeineFrequency: 2,
+        exerciseFrequency: 3,
+        circadianRegularity: 3
+    )
 
     var body: some View {
         NavigationStack {
-            if isOnboardingCompleted {
-                dashboardView
-            } else {
-                onboardingView
-            }
-        }
-        .task {
-            await viewModel.bootstrap()
-        }
-    }
-
-    private var dashboardView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                safetyCard
-                profileSummaryCard
-                scoreCard
-                taskCard
-                aiCard
-                logCard
-            }
-            .padding()
-        }
-        .navigationTitle("Autonomic Coach")
-    }
-
-    private var onboardingView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("欢迎使用 Autonomic Coach")
-                    .font(.title.bold())
-                Text("先完成 onboarding，我们会用问卷初始化你的自主神经画像。")
-                    .foregroundStyle(.secondary)
-
-                ProgressView(value: Double(onboardingStep + 1), total: 3)
-
-                Group {
-                    if onboardingStep == 0 {
-                        introCard
-                    } else if onboardingStep == 1 {
-                        questionnaireCard
-                    } else {
-                        resultCard
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    safetyCard
+                    questionnaireCard
+                    scoreCard
+                    taskCard
+                    aiCard
+                    logCard
                 }
-
-                HStack {
-                    if onboardingStep > 0 {
-                        Button("上一步") { onboardingStep -= 1 }
-                            .buttonStyle(.bordered)
-                    }
-                    Spacer()
-                    if onboardingStep < 2 {
-                        Button("下一步") { onboardingStep += 1 }
-                            .buttonStyle(.borderedProminent)
-                    } else {
-                        Button("进入主页") {
-                            completeOnboarding()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                }
+                .padding()
             }
-            .padding()
-        }
-        .navigationTitle("Onboarding")
-    }
-
-    private var introCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Onboarding 第一步")
-                .font(.headline)
-            Text("我们会结合问卷和后续可穿戴数据（HRV 为主）给你每小时健康分与建议。")
-            Text("免责声明：本应用用于健康管理，不提供医疗诊断。")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private var questionnaireCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("问卷评估")
-                .font(.headline)
-            stepperRow("睡眠质量", value: $sleepQuality)
-            stepperRow("压力水平", value: $stressLevel)
-            stepperRow("咖啡因频率", value: $caffeineFrequency)
-            stepperRow("运动频率", value: $exerciseFrequency)
-            stepperRow("昼夜规律", value: $circadianRegularity)
-            Button("生成自主神经类型") {
-                generateProfileFromQuestionnaire()
-                onboardingStep = 2
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private var resultCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("评估结果")
-                .font(.headline)
-            if let profile = container.currentProfile {
-                Text("类型：\(profile.autonomicType.rawValue)")
-                Text("基线分：\(profile.baselineScore)")
-                Text("下一步：进入主页后，每小时会自动更新健康分和任务建议。")
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("请先返回上一步生成类型。")
-                    .foregroundStyle(.secondary)
+            .navigationTitle("Autonomic Coach")
+            .task {
+                await viewModel.bootstrap()
             }
         }
-        .padding()
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func stepperRow(_ title: String, value: Binding<Int>) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Stepper("\(value.wrappedValue)", value: value, in: 1...5)
-                .labelsHidden()
-            Text("\(value.wrappedValue)")
-                .monospacedDigit()
-                .frame(width: 20)
-        }
-    }
-
-    private func generateProfileFromQuestionnaire() {
-        let answer = QuestionnaireAnswer(
-            sleepQuality: sleepQuality,
-            stressLevel: stressLevel,
-            caffeineFrequency: caffeineFrequency,
-            exerciseFrequency: exerciseFrequency,
-            circadianRegularity: circadianRegularity
-        )
-        container.currentProfile = container.questionnaireEngine.evaluate(answer)
-    }
-
-    private func completeOnboarding() {
-        if container.currentProfile == nil {
-            generateProfileFromQuestionnaire()
-        }
-        isOnboardingCompleted = true
     }
 
     private var safetyCard: some View {
@@ -179,16 +44,17 @@ struct RootView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    private var profileSummaryCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("你的画像")
+    private var questionnaireCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("问卷评估")
                 .font(.headline)
+            Text("通过问卷完成自主神经类型初始化。")
+            Button("生成类型") {
+                container.currentProfile = container.questionnaireEngine.evaluate(questionAnswer)
+            }
             if let profile = container.currentProfile {
                 Text("类型：\(profile.autonomicType.rawValue)｜基线分：\(profile.baselineScore)")
                     .font(.subheadline)
-            } else {
-                Text("尚未完成画像")
-                    .foregroundStyle(.secondary)
             }
         }
         .padding()

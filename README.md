@@ -2,7 +2,7 @@
 
 这是一个可落地的 iOS SwiftUI MVP 骨架，覆盖以下能力：
 
-- Onboarding 流程内完成问卷评估与自主神经类型初始化
+- 问卷评估自主神经类型
 - 接入可穿戴健康数据（当前提供 `MockHealthDataService`，已预留 `HealthDataService` 协议）
 - 每小时健康分评估（HRV 为核心）
 - 输出可执行微任务
